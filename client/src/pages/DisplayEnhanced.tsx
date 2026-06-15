@@ -278,6 +278,7 @@ export default function DisplayEnhanced() {
 
   // ───────────────── Vídeo ─────────────────
   const currentVideo = videos[currentIndex];
+  const [videoVersion, setVideoVersion] = useState(0);
 
   const getVideoUrl = (filename: string) => {
     if (!filename) return "";
@@ -296,6 +297,11 @@ export default function DisplayEnhanced() {
   const nextVideo = useCallback(() => {
     if (videos.length === 0) return;
 
+    if (videos.length === 1) {
+      setVideoVersion((prev) => prev + 1);
+      return;
+    }
+
     setCurrentIndex((prev) => (prev + 1) % videos.length);
   }, [videos.length]);
 
@@ -309,10 +315,6 @@ export default function DisplayEnhanced() {
       setCurrentIndex(0);
     }
   }, [videos.length, currentIndex]);
-
-  const handleVideoEnded = useCallback(() => {
-    nextVideo();
-  }, [nextVideo]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -343,7 +345,7 @@ export default function DisplayEnhanced() {
     } catch (err) {
       // ignore playback errors
     }
-  }, [videoUrl]);
+  }, [videoUrl, videoVersion]);
 
   // ───────────────── Ícone clima ─────────────────
   const WeatherIcon = ({ icon }: { icon: string }) => {
