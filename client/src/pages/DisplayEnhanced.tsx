@@ -299,20 +299,42 @@ export default function DisplayEnhanced() {
     setCurrentIndex((prev) => (prev + 1) % videos.length);
   }, [videos.length]);
 
+  useEffect(() => {
+    if (videos.length === 0) {
+      setCurrentIndex(0);
+      return;
+    }
+
+    if (currentIndex >= videos.length) {
+      setCurrentIndex(0);
+    }
+  }, [videos.length, currentIndex]);
+
   const handleVideoEnded = useCallback(() => {
     nextVideo();
+  }, [nextVideo]);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+
+    const onEnded = () => {
+      nextVideo();
+    };
+
+    v.addEventListener("ended", onEnded);
+    return () => {
+      v.removeEventListener("ended", onEnded);
+    };
   }, [nextVideo]);
 
   // Ensure the video starts playing when the source changes
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v || !videoUrl) return;
 
-    // Reset source and attempt to play the next video immediately.
     try {
       v.pause();
-      // Clear src then set again to force reload in some browsers
-      v.removeAttribute("src");
       v.src = videoUrl;
       v.load();
       v.currentTime = 0;
@@ -381,7 +403,6 @@ export default function DisplayEnhanced() {
             muted
             playsInline
             className="w-full h-full object-cover"
-            onEnded={handleVideoEnded}
           />
         </div>
       ) : (
