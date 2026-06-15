@@ -278,7 +278,6 @@ export default function DisplayEnhanced() {
 
   // ───────────────── Vídeo ─────────────────
   const currentVideo = videos[currentIndex];
-  const [videoVersion, setVideoVersion] = useState(0);
 
   const getVideoUrl = (filename: string) => {
     if (!filename) return "";
@@ -296,11 +295,6 @@ export default function DisplayEnhanced() {
 
   const nextVideo = useCallback(() => {
     if (videos.length === 0) return;
-
-    if (videos.length === 1) {
-      setVideoVersion((prev) => prev + 1);
-      return;
-    }
 
     setCurrentIndex((prev) => (prev + 1) % videos.length);
   }, [videos.length]);
@@ -321,14 +315,16 @@ export default function DisplayEnhanced() {
     if (!v) return;
 
     const onEnded = () => {
-      nextVideo();
+      // Only advance when there are multiple videos; when there's a single
+      // active video we rely on `loop` for seamless replay.
+      if (videos.length > 1) nextVideo();
     };
 
     v.addEventListener("ended", onEnded);
     return () => {
       v.removeEventListener("ended", onEnded);
     };
-  }, [nextVideo]);
+  }, [nextVideo, videos.length]);
 
   // Ensure the video starts playing when the source changes
   useEffect(() => {
@@ -336,6 +332,10 @@ export default function DisplayEnhanced() {
     if (!v || !videoUrl) return;
 
     try {
+      // when only one video is active, use the native `loop` to avoid
+      // reloading the source and producing a black flash between loops.
+      v.loop = videos.length === 1;
+
       v.pause();
       v.src = videoUrl;
       v.load();
@@ -345,7 +345,7 @@ export default function DisplayEnhanced() {
     } catch (err) {
       // ignore playback errors
     }
-  }, [videoUrl, videoVersion]);
+  }, [videoUrl, videos.length]);
 
   // ───────────────── Ícone clima ─────────────────
   const WeatherIcon = ({ icon }: { icon: string }) => {
